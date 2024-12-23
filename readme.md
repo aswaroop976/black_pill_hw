@@ -1,19 +1,20 @@
 # Table of Contents
 
-1.  [Hello world project to learn about embedded development using the STM32F411 CE (black pill) microcontroller](#org9d586de)
-    1.  [Flash and run](#org1a3b62e)
+1.  [Hello world project to learn about embedded development using the STM32F411 CE (black pill) microcontroller](#org2f846f3)
+    1.  [Flash and run](#orgea38554)
 
 
 
-<a id="org9d586de"></a>
+<a id="org2f846f3"></a>
 
 # Hello world project to learn about embedded development using the STM32F411 CE (black pill) microcontroller
 
 
-<a id="org1a3b62e"></a>
+<a id="orgea38554"></a>
 
 ## Flash and run
 
--   run command: probe-rs run &#x2013;chip STM32F411CE &#x2013;protocol SWD target/thumbv7em-none-eabihf/release/black<sub>pill</sub><sub>hw</sub>
-
+-   run command:
+    
+        probe-rs run --chip STM32F411CE --protocol SWD target/thumbv7em-none-eabihf/release/black_pill_hw
 
