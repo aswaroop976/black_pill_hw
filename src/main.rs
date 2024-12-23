@@ -1,3 +1,5 @@
+// simple blinky program, gonna try and interface with display now cya
+
 #![no_main]
 #![no_std]
 
