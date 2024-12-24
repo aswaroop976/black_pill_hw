@@ -10,53 +10,27 @@ use embedded_graphics::{
 };
 use panic_halt as _; // Panic handler
 use ssd1306::{prelude::*, Builder};
-use stm32f4::stm32f411;
+use stm32f4xx_hal::{i2c::I2c, pac, prelude::*};
 
 #[entry]
 fn main() -> ! {
-    // Take ownership of the STM32F411 peripherals
-    let dp = stm32f411::Peripherals::take().unwrap();
+    // Get access to the device peripherals
+    let dp = pac::Peripherals::take().unwrap();
 
-    // Enable GPIOB clock for I2C
-    let rcc = dp.RCC;
-    rcc.ahb1enr.modify(|_, w| w.gpioben().set_bit());
+    // Set up the system clock
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(84.mhz()).freeze();
 
-    // Configure PB6 (SCL) and PB7 (SDA) as alternate function (AF4 for I2C1)
-    let gpiob = dp.GPIOB;
-    gpiob.moder.modify(|_, w| {
-        w.moder6().alternate();
-        w.moder7().alternate()
-    });
-    gpiob.otyper.modify(|_, w| {
-        w.ot6().open_drain();
-        w.ot7().open_drain()
-    });
-    gpiob.ospeedr.modify(|_, w| {
-        w.ospeedr6().high_speed();
-        w.ospeedr7().high_speed()
-    });
-    gpiob.pupdr.modify(|_, w| {
-        w.pupdr6().pull_up();
-        w.pupdr7().pull_up()
-    });
-    gpiob.afrl.modify(|_, w| {
-        w.afrl6().af4();
-        w.afrl7().af4()
-    });
+    // Configure GPIO pins for I2C1 (PB6 = SCL, PB7 = SDA)
+    let gpiob = dp.GPIOB.split();
+    let scl = gpiob.pb6.into_alternate_af4().set_open_drain();
+    let sda = gpiob.pb7.into_alternate_af4().set_open_drain();
 
-    // Enable I2C1 clock
-    rcc.apb1enr.modify(|_, w| w.i2c1en().set_bit());
+    // Initialize the I2C1 interface
+    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), clocks);
 
-    // Configure I2C1
-    let i2c1 = dp.I2C1;
-    i2c1.cr2.modify(|_, w| w.freq().bits(42)); // APB1 clock frequency in MHz
-    i2c1.ccr
-        .modify(|_, w| w.f_s().fast_mode().duty().duty_2().bits(35)); // Fast mode (400 kHz)
-    i2c1.trise.modify(|_, w| w.trise().bits(14)); // Maximum rise time
-    i2c1.cr1.modify(|_, w| w.pe().set_bit()); // Enable I2C1
-
-    // Initialize SSD1306 using the `ssd1306` crate
-    let interface = ssd1306::I2CDisplayInterface::new(i2c1);
+    // Initialize the SSD1306 display
+    let interface = ssd1306::I2CDisplayInterface::new(i2c);
     let mut display: GraphicsMode<_> = Builder::new()
         .size(DisplaySize128x64)
         .connect(interface)
@@ -77,7 +51,6 @@ fn main() -> ! {
 
     loop {}
 }
-
 // blinky program ==============================================================
 //fn main() -> ! {
 //    // Get access to the device peripherals

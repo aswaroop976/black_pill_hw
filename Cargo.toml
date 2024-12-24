@@ -10,6 +10,7 @@ embedded-graphics = "0.8.1"
 panic-halt = "1.0.0"
 ssd1306 = "0.9.0"
 stm32f4 = { version = "0.15.1", features = ["stm32f411", "rt"] }
+stm32f4xx-hal = { version = "0.22.1", features = ["stm32f411"] }
 
 [profile.release]
 debug = true
