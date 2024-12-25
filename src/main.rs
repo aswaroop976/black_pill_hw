@@ -2,8 +2,15 @@
 #![no_std]
 
 use cortex_m_rt::entry;
+use embedded_graphics::{
+    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
+    pixelcolor::BinaryColor,
+    prelude::*,
+    text::{Baseline, Text},
+};
 use fugit::HertzU32;
 use panic_halt as _;
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 use stm32f4xx_hal::{
     i2c::{I2c, Mode},
     pac,
@@ -27,7 +34,7 @@ fn main() -> ! {
     let clocks = rcc.cfgr.freeze(); // Default 16 MHz clock (HSI)
 
     // Configure I2C1 with the desired speed (e.g., 100 kHz)
-    let _i2c = I2c::new(
+    let i2c = I2c::new(
         dp.I2C1,
         (scl, sda),
         Mode::Standard {
@@ -35,6 +42,26 @@ fn main() -> ! {
         }, // Set the mode to 100 kHz standard mode
         &clocks,
     );
+
+    let interface = I2CDisplayInterface::new(i2c);
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().unwrap();
+
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
+        .text_color(BinaryColor::On)
+        .build();
+
+    Text::with_baseline("Hello world!", Point::zero(), text_style, Baseline::Top)
+        .draw(&mut display)
+        .unwrap();
+
+    Text::with_baseline("Hello Rust!", Point::new(0, 16), text_style, Baseline::Top)
+        .draw(&mut display)
+        .unwrap();
+
+    display.flush().unwrap();
     // Use I2C to communicate with a peripheral (e.g., SSD1306)
     // Example: Sending data to an I2C device at address 0x3C
     //let address = 0x3C; // Replace with your device's I2C address
