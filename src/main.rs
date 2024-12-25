@@ -2,78 +2,46 @@
 #![no_std]
 
 use cortex_m_rt::entry;
-use embedded_graphics::{
-    pixelcolor::BinaryColor,
+use fugit::HertzU32;
+use panic_halt as _;
+use stm32f4xx_hal::{
+    i2c::{I2c, Mode},
+    pac,
     prelude::*,
-    primitives::{Rectangle, Triangle},
-    style::PrimitiveStyle,
 };
-use panic_halt as _; // Panic handler
-use ssd1306::{prelude::*, Builder};
-use stm32f4xx_hal::{i2c::I2c, pac, prelude::*};
 
 #[entry]
 fn main() -> ! {
-    // Get access to the device peripherals
+    // Access STM32 peripherals
     let dp = pac::Peripherals::take().unwrap();
 
-    // Set up the system clock
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(84.mhz()).freeze();
-
-    // Configure GPIO pins for I2C1 (PB6 = SCL, PB7 = SDA)
+    // Split GPIOB into individual pins
     let gpiob = dp.GPIOB.split();
-    let scl = gpiob.pb6.into_alternate_af4().set_open_drain();
-    let sda = gpiob.pb7.into_alternate_af4().set_open_drain();
 
-    // Initialize the I2C1 interface
-    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), clocks);
+    // Configure PB6 (SCL) and PB7 (SDA) for I2C1
+    let scl = gpiob.pb6.into_alternate().set_open_drain();
+    let sda = gpiob.pb7.into_alternate().set_open_drain();
 
-    // Initialize the SSD1306 display
-    let interface = ssd1306::I2CDisplayInterface::new(i2c);
-    let mut display: GraphicsMode<_> = Builder::new()
-        .size(DisplaySize128x64)
-        .connect(interface)
-        .into();
+    // Enable the clock and configure the system
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(); // Default 16 MHz clock (HSI)
 
-    display.init().unwrap();
-    display.flush().unwrap();
+    // Configure I2C1 with the desired speed (e.g., 100 kHz)
+    let _i2c = I2c::new(
+        dp.I2C1,
+        (scl, sda),
+        Mode::Standard {
+            frequency: HertzU32::from_raw(100_000),
+        }, // Set the mode to 100 kHz standard mode
+        &clocks,
+    );
+    // Use I2C to communicate with a peripheral (e.g., SSD1306)
+    // Example: Sending data to an I2C device at address 0x3C
+    //let address = 0x3C; // Replace with your device's I2C address
+    //let data = [0x00, 0xAF]; // Example data: SSD1306 "Display ON" command
+    //i2c.write(address, &data).unwrap();
 
-    // Draw graphics on the display
-    let rectangle = Rectangle::new(Point::new(0, 0), Size::new(64, 32))
-        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1));
-    let triangle = Triangle::new(Point::new(64, 32), Point::new(128, 32), Point::new(96, 0))
-        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1));
-
-    display.draw(&rectangle).unwrap();
-    display.draw(&triangle).unwrap();
-    display.flush().unwrap();
-
-    loop {}
+    loop {
+        // Main loop
+    }
 }
-// blinky program ==============================================================
-//fn main() -> ! {
-//    // Get access to the device peripherals
-//    let dp = stm32f411::Peripherals::take().unwrap();
-//
-//    // Enable GPIOC clock in RCC
-//    let rcc = dp.RCC;
-//    rcc.ahb1enr.modify(|_, w| w.gpiocen().set_bit());
-//
-//    // Configure PC13 as push-pull output
-//    let gpioc = dp.GPIOC;
-//    gpioc.moder.modify(|_, w| w.moder13().output()); // Set PC13 as output
-//    gpioc.otyper.modify(|_, w| w.ot13().push_pull()); // Set PC13 as push-pull
-//    gpioc.ospeedr.modify(|_, w| w.ospeedr13().low_speed()); // Set low speed
-//
-//    loop {
-//        // Turn the LED on (set PC13 high)
-//        gpioc.odr.modify(|_, w| w.odr13().set_bit());
-//        cortex_m::asm::delay(8_000_000); // Delay
-//
-//        // Turn the LED off (set PC13 low)
-//        gpioc.odr.modify(|_, w| w.odr13().clear_bit());
-//        cortex_m::asm::delay(8_000_000); // Delay
-//    }
-//}
-
