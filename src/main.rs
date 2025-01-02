@@ -68,11 +68,18 @@ fn main() -> ! {
     //let data = [0x00, 0xAF]; // Example data: SSD1306 "Display ON" command
     //i2c.write(address, &data).unwrap();
 
+    let gpioc = dp.GPIOC;
+    gpioc.moder().modify(|_, w| w.moder13().output()); // Set PC13 as output
+    gpioc.otyper().modify(|_, w| w.ot13().push_pull()); // Set PC13 as push-pull
+    gpioc.ospeedr().modify(|_, w| w.ospeedr13().low_speed()); // Set low speed
+
     loop {
-        //for addr in 0x08..0x77 {
-        //    if i2c.write(addr, &[]).is_ok() {
-        //        defmt::info!("Device found at address: 0x{:02X}", addr);
-        //    }
-        //}
+        // Turn the LED on (set PC13 high)
+        gpioc.odr().modify(|_, w| w.odr13().set_bit());
+        cortex_m::asm::delay(8_000_000); // Delay
+
+        // Turn the LED off (set PC13 low)
+        gpioc.odr().modify(|_, w| w.odr13().clear_bit());
+        cortex_m::asm::delay(8_000_000); // Delay
     }
 }
