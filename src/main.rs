@@ -69,6 +69,10 @@ fn main() -> ! {
     //i2c.write(address, &data).unwrap();
 
     loop {
-        // Main loop
+        //for addr in 0x08..0x77 {
+        //    if i2c.write(addr, &[]).is_ok() {
+        //        defmt::info!("Device found at address: 0x{:02X}", addr);
+        //    }
+        //}
     }
 }
