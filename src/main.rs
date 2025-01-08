@@ -75,11 +75,11 @@ fn main() -> ! {
 
     loop {
         // Turn the LED on (set PC13 high)
-        gpioc.odr().modify(|_, w| w.odr13().set_bit());
-        cortex_m::asm::delay(8_000_000); // Delay
-
-        // Turn the LED off (set PC13 low)
-        gpioc.odr().modify(|_, w| w.odr13().clear_bit());
-        cortex_m::asm::delay(8_000_000); // Delay
+        //        gpioc.odr().modify(|_, w| w.odr13().set_bit());
+        //        cortex_m::asm::delay(8_000_000); // Delay
+        //
+        //        // Turn the LED off (set PC13 low)
+        //        gpioc.odr().modify(|_, w| w.odr13().clear_bit());
+        //        cortex_m::asm::delay(8_000_000); // Delay
     }
 }
